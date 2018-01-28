@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>图片上传</title>
+<script src="http://www.imooc.com/data/jquery-1.8.2.min.js" type="text/javascript"></script>
+</head>
+<style type="text/css">
+    .upload{
+        display: none;
+    }
+</style>
+<body>
+<div>
+    <ul>
+        <li class="addImg">+</li>
+    </ul>
+    <div class="upload">
+        <input type="file" id="pickfiles"/>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="js/plupload.full.min.js"></script>
+<script type="text/javascript" src="js/qiniu.js"></script>
+<script type="text/javascript" src="js/moxie.js"></script>
+<script type="text/javascript" src="js/uoload.js"></script>
+<script type="text/javascript">
+ $(function(){
+    var _this;
+    $('.addImg').on('click',function(e){
+       _this = e.target;
+       $('#pickfiles').trigger('click')
+    })
+     loadImgUseQiNiu('pickfiles',uoloadtoken,function(sourceLink){
+        var length = $('img_list').length;
+        if(length>5){
+            alert('不能超过5张')
+            return false;
+        }
+        var html = "<li class="img_list"><img src="+sourceLink+"/></li>";
+        _tihs.before(html);     
+     })
+ })
+</script>
+</html>
