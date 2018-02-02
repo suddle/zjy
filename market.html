@@ -8,6 +8,14 @@
     .upload{
         display: none;
     }
+    .addImg{
+        width:50px;
+        height:50px;
+        border:1px solid #ddd;
+        display:inline-block;
+        text-align: center;
+        line-height: 50px;;
+    }
 </style>
 <body>
 <div>
@@ -20,23 +28,24 @@
 </div>
 </body>
 <script type="text/javascript" src="js/plupload.full.min.js"></script>
-<script type="text/javascript" src="js/qiniu.js"></script>
+<script type="text/javascript" src="js/qiniu.min.js"></script>
 <script type="text/javascript" src="js/moxie.js"></script>
 <script type="text/javascript" src="js/uoload.js"></script>
 <script type="text/javascript">
  $(function(){
     var _this;
+    var uploadtoken = '';
     $('.addImg').on('click',function(e){
        _this = e.target;
        $('#pickfiles').trigger('click')
     })
-     loadImgUseQiNiu('pickfiles',uoloadtoken,function(sourceLink){
+     loadImgUseQiNiu('pickfiles',uploadtoken,function(sourceLink){
         var length = $('img_list').length;
         if(length>5){
             alert('不能超过5张')
             return false;
         }
-        var html = "<li class="img_list"><img src="+sourceLink+"/></li>";
+        var html = '<li class="img_list"><img src="+sourceLink+"/></li>';
         _tihs.before(html);     
      })
  })
