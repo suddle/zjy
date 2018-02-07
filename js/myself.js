@@ -13,12 +13,12 @@ define([
             browse_button: btn,
             uptoken_url: upload_token,
             // uptoken : '',
-            unique_names: true,
-            // save_key: true,
+            unique_names: false,
+            save_key: false,
             domain: 'http://img.youxiake.com/',
             get_new_uptoken: false,
             container: 'container',
-            max_file_size: '5mb',
+            max_file_size: '100mb',
             flash_swf_url: 'js/plupload/Moxie.swf',
             max_retries: 3,
             dragdrop: true,
@@ -26,7 +26,7 @@ define([
             chunk_size: '4mb',
             auto_start: false,
             filters: {
-                max_file_size: '5mb',
+                max_file_size: '100mb',
                 prevent_duplicates: false,
                 mime_types: [{
                     title: "Image files",
@@ -35,16 +35,17 @@ define([
             },
             init: {
                 'FilesAdded': function (up, files) {
-                    up.start();
-                },
+                    plupload.each(files,function(file){
+                        if(file.size>5242880){
+                            layer.msg('文件太大，请重新上传');
+                            up.removeFile(file);
+                         }else{
+                            up.start();
+                         }
+                    })
+                },  
                 'BeforeUpload': function (up, file) {
-                    // up.files=[]
-                    // 每个文件上传前,处理相关的事情
-                     if(up.total.size>5242880){
-                        layer.msg('文件太大，请重新上传');
-                        window.location.reload();
-                        return false;
-                    }
+
                 },
                 'UploadProgress': function (up, file) {
                     // 每个文件上传时,处理相关的事情
@@ -70,7 +71,13 @@ define([
                 'Key': function (up, file) {
                     // 若想在前端对每个文件的key进行个性化处理，可以配置该函数
                     // 该配置必须要在 unique_names: false , save_key: false 时才生效
-                    var key = "";
+                    var prefix = 'youxiake';
+                    var date = new Date();
+                    var datas = parseFloat( date.getMilliseconds());
+                    var _random = Math.random().toString(36).substr(2);
+                    var keycode = datas + _random;
+                    var fileType = file.name.substring(file.name.indexOf('.')+1);
+                    var key = prefix+keycode+"."+ fileType;
                     // do something with key here
                     return key
                 }
@@ -417,7 +424,8 @@ define([
                 totalMoney();
             });
 
-            $all_sum.keyup(function () {
+            $all_sum.on('change',function () {
+                var reg=/[\u4E00-\u9FA5]/g;
                 var $count = 0,
                     $priceTotalObj = $(this).parents('.order_lists').find('.sum_price'),
                     $price = $(this).parents('.order_lists').find('.price').html(),  //单价
@@ -431,15 +439,15 @@ define([
 
                 // $(this).val($(this).val().replace(/\D|^0/g,''));
                 $count = $(this).val();
+                $count = $count.replace(reg,'');
                 if($count>all_count){
                     $count = all_count;
                 }
                 if($count==0||$count==''){
                    $count = 1; 
                 }
-                var reg=/[\u4E00-\u9FA5]/g;
                 $price = $price.replace(reg,'');
-                $priceTotal = $count*parseFloat($price);
+                $priceTotal = parseFloat($count)*parseFloat($price);
                 $(this).attr('value',$count);
                 $priceTotalObj.html($priceTotal+'元');
                 $.ajax({
@@ -468,7 +476,9 @@ define([
                 var ss = $(this).closest('.order_lists ').find('.son_check').attr('data-id');
                 allarr.push(ss);
                 layer.open({
-                    content: '是否删除',
+                    title:'提示',
+                    icon:2,
+                    content: '确定删除该商品吗？',
                     btn: ['确定', '取消',],
                     yes: function (index, layero) {
                         $.ajax({
@@ -581,7 +591,9 @@ define([
                 var ss = $(this).closest('.order_lists ').find('.shixiao').attr('data-id');
                 allarr.push(ss);
                 layer.open({
-                    content: '是否删除',
+                    title:'提示',
+                    icon:2,
+                    content: '确定删除失效商品吗？',
                     btn: ['确定', '取消',],
                     yes: function (index, layero) {
                         $.ajax({
@@ -627,7 +639,9 @@ define([
                     return false;
                 }
                 layer.open({
-                    content: '是否清空',
+                    title:'提示',
+                    icon:2,
+                    content: '确定要删除该收货地址吗？',
                     btn: ['确定', '取消',],
                     yes: function(index, layero){
                         $.ajax({
@@ -773,7 +787,9 @@ define([
                     ids = allarr[i];
                 }
                 layer.open({
-                    content: '是否删除',
+                    title:'提示',
+                    icon:2,
+                    content: '确定要删除该收货地址吗？',
                     btn: ['确定', '取消',],
                     yes: function (index, layero) {
                         $.ajax({
@@ -827,7 +843,7 @@ define([
             //保存地址
             $('.save_address').on('click',function(){
                 if($('.receiver_details').length>9){
-                    layer.msg('地址太多，请删除一些')
+                    layer.msg('最多添加10条收货地址')
                     return false;
                 }
                 var username= $("#m_username").val();
@@ -879,6 +895,15 @@ define([
                     }
                 })
             })
+            function clear(){
+                $('#m_username').val('');
+                $('#m_phone').val('');
+                $('#city').find('option:first-child').val('');
+                $('#city').find('option:first-child').text('');
+                $('#xian').find('option:first-child').val('');
+                $('#xian').find('option:first-child').text('');
+                $('#textsrea').val('')
+            }
             //修改地址
             $('.change_address').on('click',function(){
                 var ids = _brnTHis.closest('.receiver_details').attr('data-id');
@@ -929,6 +954,7 @@ define([
                     success:function(data){
                         if(data){
                             layer.msg('修改成功')
+                            clear();
                             window.location.reload();
                         }
                     }
@@ -1025,6 +1051,7 @@ define([
             })
             $('.repeal').on('click',function(){
                 layer.open({
+                    title:'提示',
                     icon:2,
                     content: '撤销申请后，不能再次申请退款，您确定撤销申请吗?',
                     btn: ['确定', '取消',],
@@ -1063,8 +1090,9 @@ define([
                     '<img src="'+sourceLink+'">'+
                     '</li>';
                 var lengths = _upload_button.closest('.addImg').find('.lisss').length+1;
+                console.log(lengths)
                 if(lengths>3){
-                    layer.msg('图片超过限制')
+                    layer.msg('最多上传3张')
                     return false;
                 }else{
                     _upload_button.before(htmls);
@@ -1107,6 +1135,17 @@ define([
                 $('.count').text(txt);
                 $("input[name='count']").val(txt);
                 // $('.moer_tui').val(val);
+            })
+            $('.moer_tui').on('keyup',function(){
+                var val = $(this).val();
+                var money = $(".price").html()*$(".count").html();
+                var reg=/[\u4E00-\u9FA5]/g;
+                val = val.replace(reg,'');
+                if(val>money){
+                    $(this).closest('.redund_money').find('.chaochu').removeClass('none')
+                }else{
+                    $(this).closest('.redund_money').find('.chaochu').addClass('none')
+                }
             })
             //退款说明
             $('.rebate').hover(function(){
@@ -1163,26 +1202,26 @@ define([
                     rules:{
                         money:{
                             required:true,
-                            range:[0,money]
+                            // range:[0,money]
                         },
                         yuanyin:{
                             required:true
                         },
-                        introduce:{
-                            required:true
-                        },
+                        // introduce:{
+                        //     required:true
+                        // },
                     },
                     messages:{
                         money:{
                             required:'请输入退款金额',
-                            range:'退款超出金额'
+                            // range:'退款超出金额'
                         },
                         yuanyin:{
                             required:'请输入退款原因'
                         },
-                        introduce:{
-                            required:'请输入退款说明'
-                        },
+                        // introduce:{
+                        //     required:'请输入退款说明'
+                        // },
                     }
                 })
                 $("#forms_re").submit();
@@ -1192,7 +1231,18 @@ define([
     };
     exports.shopComment = function(){
         (function(){
-
+            // 处理换行
+            hunahang($('.comment_p'));
+             hunahang($('.hunahang'));
+             function hunahang(val){
+                var text = val;
+                text.each(function(index,item){
+                    if($(item).text().indexOf("<br/>")){
+                        $(item).html($(item).text().replace(/\n|\r|(\r\n)|(\u0085)|(\u2028)|(\u2029)/g, '<br/>'));
+                    }            
+                })
+            
+            }
         })();
     };
     //========================================申请退款======================================================
@@ -1297,6 +1347,7 @@ define([
             }
             //验证
             $('.shop_provice').bind('input propertychange', function(){
+                
                 $(this).each(function(index,item){
                     var txt = 1000-$(item).val().length;
                     var htmls = '还可输入<em>'+txt+'</em>字';
@@ -1350,14 +1401,15 @@ define([
             //提交
             $('#sumits').on('click',function(){
                 var submit_mz = true;
+
                 $('.shop_provice').each(function(index,item){
                     if($(item).val().length<5){
-                        layer.msg('请输入至少5个字')
+                        layer.msg('至少输入5个字')
                         submit_mz = false;
                         return false;
                     }
-                    if($(item).val().length>999){
-                        layer.msg('请输入最多一千个字')
+                    if($(item).val().length>1000){
+                        layer.msg('最多输入一千个字')
                         submit_mz = false;
                         return false;
                     }
@@ -1379,704 +1431,83 @@ define([
  //========================================我的订单======================================================
     exports.myorders = function() {
         (function(){
-                    $('.replace').on('click',function(){
-                        mz_oid = $(this).attr('data-id');
-                        layer.open({
-                            content: '确定取消订单吗？',
-                            btn: ['确定', '取消',],
-                            yes: function (index, layero) {
-                                window.location = url+"?id="+mz_oid;
-                            }
-                        })
-                    });
-                    //删除单个
-                    $('.act-hd').find('.rabbage').on('click',function(){
-                        var ids =$(this).attr('data-id');
-                        var key =$(this).attr('data-key');
-                        layer.open({
-                            content: '确定删除订单吗？',
-                            btn: ['确定', '取消',],
-                            yes: function(index, layero){
-                                $.ajax({
-                                    url:orderhandle_url,
-                                    type:'post',
-                                    data:{oid:ids,key:key},
-                                    success:function(data){
-                                        if(data.code==200){
-                                            layer.msg('删除成功')
-                                            window.location.reload();
-                                        }
-                                    }
-                                })
-                            },
-                        });
-                    });
-                    //永久删除订单
-                    $(document).on('click','.delorder_yj',function(){
-                        var ids =$(this).attr('data-id');
-                        var key =$(this).attr('data-key');
-                        layer.open({
-                            icon: 2,
-                            content: '确定永久删除订单吗？永久删除后您将无法再查看该订单，也无法进行售后处理，请谨慎操作！',
-                            btn: ['确定', '取消',],
-                            yes: function (index, layero) {
-                                $.ajax({
-                                    url:orderhandle_url,
-                                    type:'post',
-                                    data:{oid:ids,key:key},
-                                    success:function(data){
-                                        if(data.code==200){
-                                            layer.msg('删除成功')
-                                            window.location.reload();
-                                        }
-                                    }
-                                })
-                            }
-                        })
-                    });
-                    //还原订单
-                    $(document).on('click','.recorder',function(){
-                        var ids =$(this).attr('data-id');
-                        var key =$(this).attr('data-key');
+            $('.replace').on('click',function(){
+                mz_oid = $(this).attr('data-id');
+                layer.open({
+                    title:'提示',
+                    icon:2,
+                    content: '确定取消订单吗？',
+                    btn: ['确定', '取消',],
+                    yes: function (index, layero) {
+                        window.location = url+"?id="+mz_oid;
+                    }
+                })
+            });
+            //删除单个
+            $('.act-hd').find('.rabbage').on('click',function(){
+                var ids =$(this).attr('data-id');
+                var key =$(this).attr('data-key');
+                layer.open({
+                    title:'提示',
+                    icon:2,
+                    content: '确定删除订单吗？',
+                    btn: ['确定', '取消',],
+                    yes: function(index, layero){
                         $.ajax({
                             url:orderhandle_url,
                             type:'post',
                             data:{oid:ids,key:key},
                             success:function(data){
                                 if(data.code==200){
-                                    layer.msg('还原成功');
+                                    layer.msg('删除成功')
                                     window.location.reload();
                                 }
                             }
                         })
-                    });
-                })();
-            };
-             exports.myorders = function() {
-                 (function(){
-                    /* 
-        * @Author: Marte
-        * @Date:   2018-02-01 09:33:43
-        * @Last Modified by:   Marte
-        * @Last Modified time: 2018-02-02 14:57:19
-        */
-
-        $(function(){
-            // 售价初始化
-            var price = parseFloat($('#goodsprice').text());
-            $('#goodsprice').text(price.toFixed(2));
-            // 初始化颜色规格id
-            var postdata = {
-                    'goods_id':goods_id,
-                    'color_id': '',
-                    'norms_id':'',
-                    'goods_num':1,
-                    'uid':uid
-            };
-
-
-            //星星打分
-            $.fn.raty.defaults.path = star_img;
-            $('#function-demo').raty({
-                number: 5, //多少个星星设置
-                targetType: 'hint', //类型选择，number是数字值，hint，是设置的数组值
-                path: star_img,
-                hints: ['差', '一般', '好', '非常好', '全五星'],
-                size: 200,
-                readOnly:true,
-                starHalf: 'ban_star.png',
-                starOff: 'star_dark.png',
-                starOn: 'start_light.png',
-                target: '#function-hint',
-                score:function(){
-                    return star_count;
-                }
+                    },
+                });
             });
-
-
-            //商品预售
-            var timer = setInterval(function(){
-                currtime--;
-                if(currtime<=0){
-                    $('#end_yushou').html("商品预售已结束。");
-                    clearInterval(timer);
-                }else {
-                    var timestring = timeStamp(currtime);
-                    $('#timestring').html(timestring);
-                }
-            },1000);
-
-
-            // 点击颜色图片
-            $('#swiper-smallimg').click(function () {
-                $(".color_bigPic").hide();
-            });
-
-
-            //选择颜色和规格
-            var selectCN = function(){
-                // $(this).siblings().removeClass('active');
-                // $(this).addClass('active');
-                if($(this).attr('class').indexOf('selectColor')>=0){
-                    postdata['color_id'] = $(this).attr('data-id');
-                    $(".color_bigPic").css("background-image", "url("+$(this)[0].src+")");
-                    
-                }
-                if($(this).attr('class').indexOf('selectNorm')>=0){
-                    postdata['norms_id'] = $(this).attr('data-id');
-                };
-                
-                if($(this).hasClass('active')){
-                    $(this).removeClass('active');
-                    $('.storagenum').text(num_all);
-                    if($(this).attr('class').indexOf('selectColor')>=0){
-                        postdata['color_id'] ='';
-                        $(".color_bigPic").hide();
-                    }
-                    if($(this).attr('class').indexOf('selectNorm')>=0){
-                         postdata['norms_id'] ='';
-                    }
-                }else{
-                    $(".color_bigPic").show();
-                   $(this).addClass('active'); 
-                   $(this).siblings().removeClass('active');
-                   if( postdata['color_id'] &&  postdata['norms_id']){
-                     getpriceajax();
-                   }
-                }
-            }
-
-
-            // 颜色规格ajax
-            var getpriceajax = function (){
-                $.post(getpriceurl,{
-                    color_id:postdata['color_id'],
-                    norms_id:postdata['norms_id'],
-                    goods_id:postdata['goods_id']
-                },function(data){
-                    var price = data['price'];
-                    var stock = data['stock'];
-                    $('#goodsprice').text(price.toFixed(2));
-                    $('.operation .storagenum').text(stock);
-                    $('.operation .goods_st_h').val(stock);
-                    if(stock<=0){
-                     $('.nnum').val('0');
-                     $('.storagenum').text('0');
-                     $('.cut').addClass('not_allowed');
-                     $('.nnum').addClass('not_allowed');
-                     $('.add').addClass('not_allowed');
-                    }else{
-                     $('.nnum').val('1');
-                     $('.cut').removeClass('not_allowed');
-                     $('.nnum').removeClass('not_allowed');
-                     $('.add').removeClass('not_allowed');
-                    }
-                    $('.storagenum').text(parseInt($('.operation .goods_st_h').val())-parseInt($('.operation .nnum').val()));
-                })
-            };
-
-
-            // 点击颜色规格
-            $('.selectColor').click(selectCN);
-            $('.selectNorm').click(selectCN);
-            $('.storagenum').text(parseInt($('.operation .goods_st_h').val())-parseInt($('.operation .nnum').val()));
-
-
-
-            //添加减少购买数量
-            var oAddCut = function(){
-                var currnum = parseInt($('.operation .nnum').val());
-                var storagenum = parseInt($('.operation .storagenum').text());
-                var storagenum_b = parseInt($('.operation .goods_st_h').val());
-                if($(this).attr('class').indexOf('add')>=0 && storagenum>0){
-                    if(currnum>storagenum_b){
-                        currnum = storagenum_b-currnum
-                    }else{
-                        currnum++;
-                        storagenum=storagenum_b-currnum;
-                    }
-                }
-                if($(this).attr('class').indexOf('cut')>=0 && storagenum>=0){
-                    // if(storagenum =storagenum_b ){
-                    //         currnum=1;
-                    if(currnum<=1){
-                        currnum=1;
-                    }else{
-                        currnum--;
-                        storagenum=storagenum_b-currnum;
-                    }
-                }
-
-                $('.operation .storagenum').text(storagenum);
-                postdata['goods_num']=currnum;
-                $('.operation .nnum').val(currnum)
-            };
-
-
-            // 数量输入框输入
-            function numCHange(){
-                var currnum = parseInt($('.operation .nnum').val());//输入框个数
-                var storagenum = parseInt($('.operation .storagenum').text());  //剩余
-                var storagenum_b = parseInt($('.operation .goods_st_h').val());//总数
-                if($('.operation .nnum').val()==''){
-                    currnum = 1;
-                }
-                if(currnum == storagenum_b){
-              
-                    currnum = storagenum_b;
-                }
-                if(currnum>storagenum_b){
-                 
-                    currnum = storagenum;
-                    storagenum=storagenum_b-currnum;
-                }
-                
-                if(currnum<=1){
-                    currnum = 1;
-                    storagenum=storagenum_b-currnum;
-                }
-
-                storagenum=storagenum_b-currnum;
-
-                $('.operation .storagenum').text(storagenum);
-                postdata['goods_num']=currnum;
-                $('.operation .nnum').val(currnum)
-            }
-
-
-           //点击减少增加数量 输入框输入数量 
-            $('.operation .add').click(oAddCut);
-            $('.operation .cut').click(oAddCut);
-            $('.operation .nnum').change(numCHange);
-
-
-            //立即预定按钮
-            $(document).click(function(){
-                $('.ydbtn .message').hide();
-            })
-
-            // 点击抢购方法
-            var reserveSubmit = function(e){
-                e.stopPropagation();
-                if(currtime <0){
-                   $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('商品预售已结束')
-                    return false; 
-                }
-                var currnum = parseInt($('.operation .nnum').val());
-                var storagenum =parseInt($('.operation .goods_st_h').val());
-
-                if(!postdata['color_id']){
-        //                $('.ydbtn .message').show();
-        //                $('.ydbtn .tmessage').text('请选择款式');
-                    $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('请选择颜色')
-                    return false;
-                }
-                if(!postdata['norms_id']){
-        //                $('.ydbtn .message').show();
-        //                $('.ydbtn .tmessage').text('请选择尺码');
-                    $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('请选择规格')
-                    return false ;
-                }
-                if(currnum-storagenum>0){
-        //                $('.ydbtn .message').show();
-        //                $('.ydbtn .tmessage').text('商品数量超过库存');
-                    $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('商品数量超过库存');
-                    $('.goods_mask_tsmr').css('background-position','108px center');
-                    $('.goods_mask_tsmr').css('text-indent','36px');
-                    return false;
-                }
-                $("input[name='goods_id']").val(postdata['goods_id']);
-                $("input[name='color_id']").val(postdata['color_id']);
-                $("input[name='norms_id']").val(postdata['norms_id']);
-                $("input[name='goods_num']").val(postdata['goods_num']);
-            };
-            //点击抢购
-            $('.btn1').click(reserveSubmit)
-
-
-
-           // 点击购买方法
-            var offset=$('.rightFloat_shoppingCart').offset();
-            var ds = function(e){
-                var num =1;
-                var addcar=$(this);
-                e.stopPropagation();
-                if(currtime <0){
-                   $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('商品预售已结束')
-                    return false; 
-                }
-                if(postdata['uid']<1){
-                    window.location.href=login_url;
-                    return false;
-                }
-                if(!postdata['color_id']){
-                    $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('请选择颜色')
-                    return false;
-                }
-                if(!postdata['norms_id']){
-                    $('.goods_mask').show();
-                    $('.goods_mask_ts').show();
-                    $('.goods_mask_tsmr em').text('请选择规格')
-                    return false ;
-                }
-                var color_id_c= $('.cimgs').find('.active').attr('data-id');
-                var norms_id_c = $('.sml').find('.active').attr('data-id');
-                var goods_num_c = $('.nnum').val();
-                var goods_id_c = postdata['goods_id'];
-                $.ajax({
-                    url:shop_cart_url,
-                    type:'post',
-                    data:{"color_id":color_id_c,"norms_id":norms_id_c,"goods_num":goods_num_c,"goods_id":goods_id_c},
-                    success:function(data){
-                        if(data.code==200){
-                            $('.goods_mask').show();
-                            $('.goods_mask_ts').show();
-                            $('.goods_mask_tsmr em').text('加入购物车成功！');
-                            $('.shoppingCart_count').text(data.carnum);
-                        }
-                    }
-                })
-            }
-        //        点击购买
-            $('.btn2').click(ds)
-
-
-
-           
-            //预售倒计时     时间戳 转 月日时分秒   
-            function timeStamp( second_time ){
-                var time = parseInt(second_time) + "秒";
-                if( parseInt(second_time )> 60){
-
-                    var second = parseInt(second_time) % 60;
-                    var min = parseInt(second_time / 60);
-                    time = min + "分" + second + "秒";
-
-                    if( min > 60 ){
-                        min = parseInt(second_time / 60) % 60;
-                        var hour = parseInt( parseInt(second_time / 60) /60 );
-                        time = hour + "小时" + min + "分" + second + "秒";
-
-                        if( hour > 24 ){
-                            hour = parseInt( parseInt(second_time / 60) /60 ) % 24;
-                            var day = parseInt( parseInt( parseInt(second_time / 60) /60 ) / 24 );
-                            time = day + "天 " + hour + "小时 " + min + "分 " + second + "秒";
-                        }
-                    }
-                }
-                return time;
-            }
-
-
-
-            //鼠标移上预售事件
-            $('.rule').hover(function(){
-                $('.book_rule').toggle();
-            })
-
-
-
-            var foot_height;
-            setTimeout(function(){
-                foot_height = document.body.scrollHeight;
-            },500)
-            //scroll 事件 商品详情吸顶
-            $(window).scroll(function() {
-                console.log(foot_height)
-                var scrolltop = document.documentElement.scrollTop || document.body.scrollTop;
-                if(scrolltop>=(document.body.scrollHeight-800)){
-                    $(".d_leftBox").css('bottom','250px')
-
-                }else{
-                    $(".d_leftBox").css('bottom','50px')
-                }
-               if(scrolltop>792){
-                   $('.x_buy_fix').addClass('tops')
-               }else{
-                   $('.x_buy_fix').removeClass('tops')
-               }
-               if(scrolltop>foot_height-1000){
-                $('.shop2_rightFloat').hide();
-               }else{
-                    $('.shop2_rightFloat').show();
-               }
-            });
-
-
-
-            //提示框弹层js
-            $('.goods_mask_tstr').click(function(){
-                $('.goods_mask').hide();
-                $('.goods_mask_ts').hide();
-            });
-            $('.goods_mask_tsbb').click(function(){
-                $('.goods_mask').hide();
-                $('.goods_mask_ts').hide();
-            });
-            $('.x_buy_fixl span').on('click',function(){
-                $(this).addClass('detaikl_color').siblings().removeClass('detaikl_color')
-            })
-
-
-            // 点击商品详情  评价晒单
-            var sd_height = 0;
-            var xq_height = 0;
-            setTimeout(function(){
-                sd_height = $('#comment_header').offset().top-200;
-            },500)
-            xq_height = $('.viewDetails_botlb').offset().top-200;
-            $('.appris_dan').on('click',function(){
-                $('body,html').animate({scrollTop:sd_height},500);
-            })
-
-
-
-            // 鼠标移上侧边二维码
-            $('.shop_detail').on('click',function(){
-                $('body,html').animate({scrollTop:xq_height},500);
-            })
-            $('.rightFloat_phone').hover(function(){
-                $(this).find('.ewm').show();
-            },function(){
-                $(this).find('.ewm').hide();
-            });
-
-
-
-            //点击回到顶部 
-            $(document).on('click','.rightFloat_toTop',function(){
-                $('body,html').animate({scrollTop:0},500);
-            })
-            $('.ps-current ul li').on('click',function(){
-                $(this).closest('.ps-current').hide();
-            })
-            $('.ps-prev,.ps-next').on('click',function(e){
-                window.event? window.event.returnValue = false : e.preventDefault();
-            })
-            $('.ps-list').on('click',function(){
-                $('.ps-current').show();
-            })
-
-
-
-        //      分页
-            $(".page").Page({
-                totalPages:all_page,
-                liNums: 5,
-                activeClass: 'activP',
-                firstPage: '首页',
-                lastPage: '末页',
-                prv: '上一页',
-                next: '下一页',
-                callBack : function(page){
-                    $.ajax({
-                        url:page_url,
-                        type:'post',
-                        data:{"id":goods_id,"page":page},
-                        success:function(data){
-                            if(data.code==200){
-                                $(".comment_ul").html("");
-                                var count = data.list;
-                                $("#pictureBox").html(html);
-                                $('.pgwSlideshow').pgwSlideshow();
-
-                                for(var j=0;j<count.length;j++){
-                                    var html = '<div class="comment_li clearfix">' +
-                                        '<div class="comment_li_avatar">' +
-                                        '<a href="" style="background-image: url(' + count[j].avatar + ');"></a>' +
-                                        '<div class="yxk_user">' + count[j].username + '</div>' +
-                                        '</div>' +
-                                        '<div>' +
-                                        '<div class="comment_li_content clearfix">' +
-                                        '<div class="li_content_stars clearfix">' +
-                                        star_loop(count[j].mark)+
-                                        '</div>' +
-                                        '<div class="li_content_comment">' + count[j].content + '</div>' +
-                                        lunbos(count[j].img)+
-                                        '<div class="li_content_date">' + count[j].created_at +
-                                        '</div>' +
-                                        '</div>';
-                                    if (count[j].channel == 3) {
-                                        html = '<div class="comment_li clearfix">' +
-                                            '<div class="comment_li_avatar">' +
-                                            '<a href="" style="background-image: url(' + count[j].avatar + ');"></a>' +
-                                            '<div class="yxk_user">' + count[j].username + '</div>' +
-                                            '</div>' +
-                                            '<div>' +
-                                            '<div class="comment_li_content clearfix">' +
-                                            '<div class="li_content_stars clearfix">' +
-                                            star_loop(count[j].mark)+
-                                            '</div>' +
-                                            '<div class="li_content_comment">' + count[j].content + '</div>' +
-                                            lunbos(count[j].img)+
-                                            '<div class="li_content_date">' + count[j].created_at + '<span>来自<a href="" target="_blank">游侠客APP</a></span></div>' +
-                                            '</div>' +
-                                            '</div>';
-                                    }
-                                    if (count[j].reply.content !== undefined) {
-                                        html = '<div class="comment_li clearfix">' +
-                                            '<div class="comment_li_avatar">' +
-                                            '<a href="" style="background-image: url(' + count[j].avatar + ');"></a>' +
-                                            '<div class="yxk_user">' + count[j].username + '</div>' +
-                                            '</div>' +
-                                            '<div>' +
-                                            '<div class="comment_li_content clearfix">' +
-                                            '<div class="li_content_stars clearfix">' +
-                                            star_loop(count[j].mark)+
-                                            '</div>' +
-                                            '<div class="li_content_comment">' + count[j].content + '</div>' +
-                                            lunbos(count[j].img)+
-                                            '<div class="li_content_date">'+count[j].created_at+
-                                            '<div class="pingjia">' +
-                                            '<p>' + '<em class="">游小侠 回复：</em>' + count[j].reply.content + '</p>' +
-                                            '<p>' + count[j].reply.created_at + '</p>' +
-                                            '</div>' +
-                                            '</div>' +
-                                            '</div>';
-                                    }
-                                    if(count[j].channel == 3 && count[j].reply.content !== undefined){
-                                        html = '<div class="comment_li clearfix">' +
-                                            '<div class="comment_li_avatar">' +
-                                            '<a href="" style="background-image: url('+count[j].avatar+');"></a>' +
-                                            '<div class="yxk_user">'+count[j].username+'</div>'+
-                                            '</div>'+
-                                            '<div>' +
-                                            '<div class="comment_li_content clearfix">'+
-                                            '<div class="li_content_stars clearfix">'+
-                                            star_loop(count[j].mark)+
-                                            '</div>'+
-                                            '<div class="li_content_comment">'+count[j].content+'</div>'+
-                                            lunbos(count[j].img)+
-                                            '<div class="li_content_date">'+count[j].created_at+'<span>来自<a href="" target="_blank">游侠客APP</a></span></div>'+
-                                            '<div class="pingjia">'+
-                                            '<p>'+'<em class="">游小侠 回复：</em>'+count[j].reply.content+'</p>'+
-                                            '<p>'+count[j].reply.created_at+'</p>'+
-                                            '</div>'+
-                                            '</div>'+
-                                            '</div>';
-                                    }
-                                    $(".comment_ul").append(html);
-                                    nameStar();
+            //永久删除订单
+            $(document).on('click','.delorder_yj',function(){
+                var ids =$(this).attr('data-id');
+                var key =$(this).attr('data-key');
+                layer.open({
+                    title:'提示',
+                    icon:2,
+                    content: '确定永久删除订单吗？永久删除后您将无法再查看该订单，也无法进行售后处理，请谨慎操作！',
+                    btn: ['确定', '取消',],
+                    yes: function (index, layero) {
+                        $.ajax({
+                            url:orderhandle_url,
+                            type:'post',
+                            data:{oid:ids,key:key},
+                            success:function(data){
+                                if(data.code==200){
+                                    layer.msg('删除成功')
+                                    window.location.reload();
                                 }
                             }
-                        }
-                    })
-                }
+                        })
+                    }
+                })
             });
-
-
-            
-            // 名字加星显示
-            nameStar();
-            function nameStar(){
-              $('.yxk_user').each(function(index,item){
-                    var name = $(item).text().replace(/(.{1}).*(.{1})/,"$1**$2");
-                    $(item).text(name)
-             })  
-            }
-
-
-
-
-            //循环星星
-            function star_loop(num) {
-                var html_star = "";
-                for(var j=0;j<num;j++){
-                    html_star += '<div class="star"></div>';
-                }
-                for(var j=0;j<(5-num);j++){
-                    html_star += '<div class="stardark"></div>';
-                }
-                return html_star;
-            }
-
-
-
-
-            // 轮播
-            function lunbos(imgs){
-                var lunbohtml = '';
-                if(!imgs){
-                    return lunbohtml;
-                }
-                lunbohtml = '<div class="lunbo">'+
-                    '<ul class="zy_uls clearfix">'+
-                    loop_img(imgs)+
-                    '</ul>'+
-                    '<div class="cy_banner">'+
-                    '<ul class="cy_lus clearfix">'+
-                    '<div class="cy_imgs">'+
-                    loop_img(imgs)+
-                    '</div>'+
-                    '</ul>'+
-                    '<strong class="bt1"></strong>'+
-                    ' <strong class="bt2"></strong>'+
-                    ' </div>'+
-                    ' </div>';
-                return lunbohtml;
-            }
-            //   轮播
-            function loop_img(num) {
-                var html_star = "";
-                for(var m=0;m<num.length;m++){
-                    html_star += '<li><img src="'+num[m]+'"></li>';
-                }
-                return html_star;
-            }
-            //轮播
-            var lbindex = 0;
-            var lengths  ;
-            $(document).on('click','.zy_uls li',function(){
-                var count = $(this).index();
-                lbindex = $(this).index();
-                $(this).closest('.lunbo').find('.cy_banner').show();
-                $(this).addClass('on').siblings().removeClass('on');
-                $(this).closest('.lunbo').find('.cy_lus li').eq(count).addClass('block').siblings().removeClass('block');
-            })
-
-            $(document).on('click','.bt2',function(){
-                lbindex++;
-                lengths  = $(this).closest('.lunbo').find('.zy_uls li').length;
-                if(lbindex>lengths-1){
-                    lbindex=0;
-                }
-                $(this).closest('.lunbo').find('.zy_uls li').eq(lbindex).addClass('on').siblings().removeClass('on');
-                $(this).closest('.lunbo').find('.cy_lus li').eq(lbindex).addClass('block').siblings().removeClass('block')
-            })
-
-            $(document).on('click','.bt1',function(){
-                lbindex--;
-                lengths  = $(this).closest('.lunbo').find('.zy_uls li').length-1;
-                if(lbindex<0){
-                    lbindex=lengths;
-                }
-                $(this).closest('.lunbo').find('.zy_uls li').eq(lbindex).addClass('on').siblings().removeClass('on');
-                $(this).closest('.lunbo').find('.cy_lus li').eq(lbindex).addClass('block').siblings().removeClass('block');
-            })
-            $(document).on('click','.cy_imgs',function(){
-                $(this).closest('.lunbo').find('.cy_banner').hide();
-            })
-            //    分享
-            $('#share').on('mouseenter',function(){
-                $('.video_shareBox').show();
-            })
-            $('#share').on('mouseleave',function(){
-                $('.video_shareBox').hide();
-            })
-         });
-       })();
-     }
+            //还原订单
+            $(document).on('click','.recorder',function(){
+                var ids =$(this).attr('data-id');
+                var key =$(this).attr('data-key');
+                $.ajax({
+                    url:orderhandle_url,
+                    type:'post',
+                    data:{oid:ids,key:key},
+                    success:function(data){
+                        if(data.code==200){
+                            layer.msg('还原成功');
+                            window.location.reload();
+                        }
+                    }
+                })
+            });
+        })();
+    }
     return exports;
 })
