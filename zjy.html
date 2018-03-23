@@ -8,6 +8,8 @@
         <span class="hunahang">内容</span>
     </body>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <!-- 分享 -->
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
     <script type="text/javascript">
         // 名字中间加省略号的解决方法
         nameStar();
@@ -111,6 +113,47 @@
                     }
                 }
                 remove(imgs)
+
+                // 微信分享功能
+                 window.title = '{{$appshare['share_title'] or ''}}';
+                window.desc = '{{$appshare['share_desc'] or ''}}';
+                window.url = '{{route('zt.special',['chuntian'])}}';
+                window.imgUrl = '{{asset('assets/src/images/zhuanti/chuntian/share.jpg')}}';
+
+                wx.config({!! $wx_config !!});
+
+                wx.ready(function () {
+
+                    // 获取“分享到朋友圈”按钮点击状态及自定义分享内容接口
+                    wx.onMenuShareTimeline({
+                        title: window.title, // 分享标题
+                        link: window.url,
+                        imgUrl: window.imgUrl, // 分享图标
+                        type: window.shareType?window.shareType:'link',
+                        dataUrl: window.url,
+                        success: function () {
+                            // 用户确认分享后执行的回调函数
+                        },
+                        cancel: function () {
+                            // 用户取消分享后执行的回调函数
+                        }
+                    });
+                    // 获取“分享给朋友”按钮点击状态及自定义分享内容接口
+                    wx.onMenuShareAppMessage({
+                        title: window.title, // 分享标题
+                        desc: window.desc, // 分享描述
+                        link: window.url,
+                        imgUrl: window.imgUrl, // 分享图标
+                        type: window.shareType?window.shareType:'link', // 分享类型,music、video或link，不填默认为link
+                        dataUrl: window.url,
+                        success: function () {
+                            // 用户确认分享后执行的回调函数
+                        },
+                        cancel: function () {
+                            // 用户取消分享后执行的回调函数
+                        }
+                    });
+                });
 
     </script>
 </html>
