@@ -4,8 +4,113 @@
         <meta charset="utf-8">
     </head>
     <body>
+        <span class="yxk_user"></span>
+        <span class="hunahang">内容</span>
     </body>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script type="text/javascript">
-        
+        // 名字中间加省略号的解决方法
+        nameStar();
+        function nameStar(){
+            $('.yxk_user').each(function(index,item){
+                var name = $(item).text().replace(/(.{1}).*(.{1})/,"$1**$2");
+                $(item).text(name)
+            })
+        }
+        // 换行显示
+        hunahang($('.hunahang'));
+        function hunahang(val){
+            var text = val;
+            text.each(function(index,item){
+                if($(item).text().indexOf("<br/>")){
+                    $(item).html($(item).text().replace(/\n|\r|(\r\n)|(\u0085)|(\u2028)|(\u2029)/g, '<br/>'));
+                }
+            })
+
+        }
+
+        // ajax请求回来数据 额外的添加方法
+        html = '<div class="comment_li clearfix">' +
+                '<div class="comment_li_avatar">' +
+                '<a href="" style="background-image: url('+count[j].avatar+');"></a>' +
+                '<div>'+count[j].username+'</div>'+
+                '</div>'+
+                '<div>' +
+                '<div class="comment_li_content clearfix">'+
+                '<div class="li_content_stars clearfix">'+
+                star_loop(count[j].mark)+
+                '</div>'+
+                '<div class="li_content_comment">'+count[j].content+'</div>'+
+                lunbos(count[j].img)+
+                '<div class="li_content_date">'+count[j].created_at+'<span>来自<a href="" target="_blank">游侠客APP</a></span></div>'+
+                '<div class="pingjia">'+
+                '<p>'+'<em class="">游小侠 回复：</em>'+count[j].reply.content+'</p>'+
+                '<p>'+count[j].reply.created_at+'</p>'+
+                '</div>'+
+                '</div>'+
+                '</div>';
+
+
+                //循环星星
+                function star_loop(num) {
+                    var html_star = "";
+                    for(var j=0;j<num;j++){
+                        html_star += '<div class="star"></div>';
+                    }
+                    for(var j=0;j<(5-num);j++){
+                        html_star += '<div class="stardark"></div>';
+                    }
+                    return html_star;
+                }
+
+                // 轮播
+                function lunbos(imgs){
+                    var lunbohtml = '';
+                    if(!imgs){
+                        return lunbohtml;
+                    }
+                    lunbohtml = '<div class="lunbo">'+
+                        '<ul class="zy_uls clearfix">'+
+                        loop_img(imgs)+
+                        '</ul>'+
+                        '<div class="cy_banner">'+
+                        '<ul class="cy_lus clearfix">'+
+                        '<div class="cy_imgs">'+
+                        loop_img(imgs)+
+                        '</div>'+
+                        '</ul>'+
+                        '<strong class="bt1"></strong>'+
+                        ' <strong class="bt2"></strong>'+
+                        ' </div>'+
+                        ' </div>';
+                    return lunbohtml;
+                }
+                //   轮播
+                function loop_img(num) {
+                    var html_star = "";
+                    for(var m=0;m<num.length;m++){
+                        html_star += '<li><img src="'+num[m]+'"></li>';
+                    }
+                    return html_star;
+                }
+
+                // 去掉重复内容
+                var arrss = [];//数组
+                var imgs = '';//单个数据
+                function indexOf(val){
+                    for(var i = 0; i < arrss.length; i++){
+                        if(arrss[i] == val){
+                            return i;
+                        }
+                    }
+                }
+                function remove(val){
+                    var index = indexOf(val);
+                    if(index > -1){
+                        arrss.splice(index,1);
+                    }
+                }
+                remove(imgs)
+
     </script>
 </html>
