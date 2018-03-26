@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script type="text/javascript">
+    $(function(){
+        // shopcar's select and checked
+        // 购物车的结算方法
+        function totalMoney() {
+                var total_money = 0;
+                var total_count = 0;
+                var calBtn = $('.calBtn a');
+                var money = 0;
+                $sonCheckBox.each(function () {
+                    if ($(this).is(':checked')) {
+                        var count = parseFloat($(this).closest('.order_lists').find('.sum').val());
+                        var price =  parseFloat(($(this).parents('.order_lists').find('.price').html()).replace(/[^\d.]/g,''));
+
+                        money = count*price;
+                        total_count += count;
+                        total_money += money;
+
+                        $('.total_text').html(total_money.toFixed(2)+'元');
+                        $('.piece_num').html(total_count);
+                        $(this).parents('.order_lists').find('.sum_price').text(money.toFixed(2)+'元')
+                    }
+                });
+                if(total_money!=0 && total_count!=0){
+                    if(!calBtn.hasClass('btn_sty')){
+                        calBtn.addClass('btn_sty');
+                    }
+                }else{
+                    if(calBtn.hasClass('btn_sty')){
+                        $('.total_text').html(0+'元');
+                        $('.piece_num').html(0);
+                        calBtn.removeClass('btn_sty');
+                    }
+                }
+            }
+
+
+            // 商品数量的增加
+             var dts = [];
+            var allarr = [];
+            var $plus = $('.plus'),
+                $reduce = $('.reduce'),
+                $all_sum = $('.sum');
+            $plus.click(function () {
+                dts = [];
+                allarr = [];
+                var $inputVal = $(this).prev('input'),
+                    $count = parseFloat($inputVal.val())+1,
+                    $obj = $(this).parents('.amount_box').find('.reduce'),
+                    $priceTotalObj = $(this).parents('.order_lists').find('.sum_price'),
+                    $price = $(this).parents('.order_lists').find('.price').html(),  //单价
+                    $price = $price.replace(/[^\d.]/g,''),
+                    $priceTotal = $count*($price),
+                    inventory = $(this).closest('.order_lists').attr('data-cartid'),
+                    all_count = parseFloat($(this).closest('.order_arr').attr('data-id')),
+                    mz_nid = $(this).closest('.order_lists').attr('data-nid');
+                if(parseFloat($inputVal.val()) >=parseFloat(all_count) ){
+                    $inputVal = all_count;
+                    layer.msg('库存有限，请重新选择')
+                    return false;
+                }
+                $inputVal.val($count);
+                $priceTotalObj.html($priceTotal.toFixed(2)+'元');
+                if($inputVal.val()>1 && $obj.hasClass('reSty')){
+                    $obj.removeClass('reSty');
+                }
+                var chenks = $(this).closest('.order_lists ').find('.son_check');
+                if(chenks.is(':checked')){
+                    $('.son_check:checked').each(function(index,item){
+                        allarr.push($(item).attr('data-id'))
+                    })
+                    $('.order_arr ').find('.son_check:checked').each(function(index,item){
+                        var a = $(item).attr('data-id');
+                        var b = $(item).closest('.order_arr').find('.sum').val();
+                        (function (a, b) {
+                            dts.push({
+                                'id':a,
+                                'num':b
+                            });
+                        })(a, b)
+                    })
+                    $('#arr_cart').val(JSON.stringify(dts))
+                }else{
+                    allarr = [];
+                    dts = [];
+                }
+                $.ajax({
+                    url:editacr_url,
+                    type:'post',
+                    data:{
+                        id:inventory,
+                        nid:mz_nid,
+                        num:$count,
+                    },
+                    success:function(){
+
+                    }
+                })
+                totalMoney();
+            });
+// 商品数量的减少
+$reduce.click(function () {
+                dts = [];
+                allarr = [];
+                var $inputVal = $(this).next('input'),
+                    $count = parseFloat($inputVal.val())-1,
+                    $priceTotalObj = $(this).parents('.order_lists').find('.sum_price'),
+                    $price = $(this).parents('.order_lists').find('.price').html(),  //单价
+                    $price = $price.replace(/[^\d.]/g,''),
+                    $priceTotal = $count*($price),
+                    inventory = $(this).closest('.order_lists').attr('data-cartid'),
+                    mz_nid = $(this).closest('.order_lists').attr('data-nid');
+                if($inputVal.val()>1){
+                    $inputVal.val($count);
+                    $priceTotalObj.html($priceTotal.toFixed(2)+'元');
+                }
+                if($inputVal.val()==1 && !$(this).hasClass('reSty')){
+                    $(this).addClass('reSty');
+                }
+                var chenks = $(this).closest('.order_lists ').find('.son_check');
+                if(chenks.is(':checked')){
+                    $('.son_check:checked').each(function(index,item){
+                        allarr.push($(item).attr('data-id'))
+                    })
+                    $('.order_arr').find('.son_check:checked').each(function(index,item){
+                        var a = $(item).attr('data-id');
+                        var b = $(item).closest('.order_arr').find('.sum').val();
+                        (function (a, b) {
+                            dts.push({
+                                'id':a,
+                                'num':b
+                            });
+                        })(a, b)
+                    })
+                    $('#arr_cart').val(JSON.stringify(dts))
+                }else{
+                    allarr = [];
+                    dts = [];
+                }
+
+                $.ajax({
+                    url:editacr_url,
+                    type:'post',
+                    data:{
+                        id:inventory,
+                        nid:mz_nid,
+                        num:$count,
+                    },
+                    success:function(){
+
+                    }
+                })
+                totalMoney();
+            });
+// 手动输入商品数量
+$all_sum.on('change',function () {
+                var reg=/[\u4E00-\u9FA5]/g;
+                var $count = 0,
+                    $priceTotalObj = $(this).parents('.order_lists').find('.sum_price'),
+                    $price = $(this).parents('.order_lists').find('.price').html(),  //单价
+                    $priceTotal = 0,
+                    //库存
+                    all_count = parseFloat($(this).closest('.order_arr').attr('data-id')),
+                    //购物车id
+                    inventory = parseFloat($(this).closest('.order_lists').attr('data-cartid')),
+                    //规格
+                    mz_nid = $(this).closest('.order_lists').attr('data-nid');
+
+                // $(this).val($(this).val().replace(/\D|^0/g,''));
+                $count = $(this).val();
+                $count = $count.replace(reg,'');
+                if($count>all_count){
+                    $count = all_count;
+                }
+                if($count==0||$count==''){
+                    $count = 1;
+                }
+                $price = $price.replace(reg,'');
+                $priceTotal = parseFloat($count)*parseFloat($price);
+                $(this).attr('value',$count);
+                $priceTotalObj.html($priceTotal+'元');
+                $.ajax({
+                    url:editacr_url,
+                    type:'post',
+                    data:{
+                        id:inventory,
+                        nid:mz_nid,
+                        num:$count,
+                    },
+                    success:function(){
+
+                    }
+                })
+                totalMoney();
+            })
+// 点击单个商品
+$sonCheckBox.each(function () {
+                if($(this).is(':checked')){
+                    if($('.son_check').length==$('.son_check:checked').length){
+                        $wholeChexbox.closest('.list_chk').find('label ').addClass('mark');
+                    }
+                    $(this).closest('.list_chk').find('label ').addClass('mark');
+                    totalMoney();
+                }
+                $(this).click(function () {
+                    if ($(this).is(':checked')) {
+                        //判断：所有单个商品是否勾选
+                        var len = $sonCheckBox.length;
+                        var num = 0;
+                        $sonCheckBox.each(function () {
+                            if ($(this).is(':checked')) {
+                                num++;
+                            }
+                        });
+                        if (num == len) {
+                            $wholeChexbox.prop("checked", true);
+                            $wholeChexbox.next('label').addClass('mark');
+                        }
+                    } else {
+                        //单个商品取消勾选，全局全选取消勾选
+                        $wholeChexbox.prop("checked", false);
+                        $wholeChexbox.next('label').removeClass('mark');
+                    }
+                })
+            })
+    })
+// 点击全选
+ $wholeChexbox.click(function () {
+                var $checkboxs = $cartBox.find('input[type="checkbox"]');
+                if ($(this).is(':checked')) {
+                    $checkboxs.prop("checked", true);
+                    $checkboxs.next('label').addClass('mark');
+                    $wholeChexbox.next('label').addClass('mark');
+                } else {
+                    $checkboxs.prop("checked", false);
+                    $checkboxs.next('label').removeClass('mark');
+                    $wholeChexbox.next('label').removeClass('mark');
+                }
+                totalMoney();
+            });
+
+ // 删除图片
+ //点击删除图片
+            $(document).on('click','.lisss em',function(e){
+                qn = $(this).closest('li').index();
+
+                var txt = $('.text_hide').text();
+                var imgs = $(this).closest('.lisss').find('img:nth-child(2)').attr('src');
+                var arrss=JSON.parse( txt.split(",") );
+                function indexOf(val){
+                    for(var i = 0; i < arrss.length; i++){
+                        if(arrss[i] == val){
+                            return i;
+                        }
+                    }
+                }
+                function remove(val){
+                    var index = indexOf(val);
+                    if(index > -1){
+                        arrss.splice(index,1);
+                    }
+                }
+                remove(imgs)
+                $('.text_hide').text(JSON.stringify(arrss))
+                arr = [];
+                for(var i = 0; i < arrss.length; i++){
+                    arr.push(arrss[i]);
+                }
+                $(this).closest('li').remove();
+                window.event? window.event.cancelBubble = true : e.stopPropagation();
+                return false;
+            })
+// 星星打分
+//星星打分
+            $('.goods_score i').on('click',function(){
+                $(this).addClass('on');
+                $(this).nextAll().removeClass('on')
+
+                if($(this).index()==0){
+                    $(this).closest('.goods_score').find('.star_txt').text('1星失望')
+                }
+                if($(this).index()==1){
+                    $(this).closest('.goods_score').find('.star_txt').text('2星一般')
+                }
+                if($(this).index()==2){
+                    $(this).closest('.goods_score').find('.star_txt').text('3星不错')
+                }if($(this).index()==3){
+                    $(this).closest('.goods_score').find('.star_txt').text('4星满意')
+                }if($(this).index()==4){
+                    $(this).closest('.goods_score').find('.star_txt').text('5星惊喜')
+                }
+                $(this).closest('.goods_text2').find('.hidden').val($(this).index()+1);
+                return false;
+            })
+            $('.goods_score i').on('mouseenter',function(){
+                $(this).addClass('on')
+                $(this).prevAll().addClass('on')
+                $(this).nextAll().removeClass('on');
+                if($(this).index()==0){
+                    $(this).closest('.goods_score').find('.star_txt').text('1星失望')
+                }
+                if($(this).index()==1){
+                    $(this).closest('.goods_score').find('.star_txt').text('2星一般')
+                }
+                if($(this).index()==2){
+                    $(this).closest('.goods_score').find('.star_txt').text('3星不错')
+                }if($(this).index()==3){
+                    $(this).closest('.goods_score').find('.star_txt').text('4星满意')
+                }if($(this).index()==4){
+                    $(this).closest('.goods_score').find('.star_txt').text('5星惊喜')
+                }
+                $(this).closest('.goods_text2').find('.hidden').val($(this).index()+1)
+                leave();
+            })
+            leave();
+            function leave(){
+                $('.goods_score i').on('mouseleave',function(){
+                    $(this).prevAll().addClass('on');
+                    $(this).addClass('on');
+                    if($(this).index()==0){
+                        $(this).closest('.goods_score').find('.star_txt').text('1星失望')
+                    }
+                    if($(this).index()==1){
+                        $(this).closest('.goods_score').find('.star_txt').text('2星一般')
+                    }
+                    if($(this).index()==2){
+                        $(this).closest('.goods_score').find('.star_txt').text('3星不错')
+                    }if($(this).index()==3){
+                        $(this).closest('.goods_score').find('.star_txt').text('4星满意')
+                    }if($(this).index()==4){
+                        $(this).closest('.goods_score').find('.star_txt').text('5星惊喜')
+                    }
+                    $(this).closest('.goods_text2').find('.hidden').val($(this).index()+1);
+                })
+            }
+</script>
+</html>
