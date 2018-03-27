@@ -343,5 +343,66 @@ $sonCheckBox.each(function () {
                     $(this).closest('.goods_text2').find('.hidden').val($(this).index()+1);
                 })
             }
+            // dati
+            var count = 0;
+            var wait=11,timer;
+            var timeindex = 0;
+            $('.dati_wrap').on('touchstart','.xuanziang li',function(){
+                var cloindex = $(this).closest('.dati').index();
+                timeindex = cloindex+1;
+                var index = $(this).index();
+                var answer = parseInt( $(this).closest('.xuanziang').attr('data-answer') );
+                if(index== answer){
+                    $(this).addClass('right')
+                    arr.push('1')
+                    $(this).parent().find('li').addClass('pointer_no');
+                    daan(cloindex+1)
+                }else{
+                    $(this).closest('.xuanziang').find('li').eq(answer).addClass('right')
+                    $(this).addClass('wrong')
+                    $(this).parent().find('li').addClass('pointer_no');
+                    daan(cloindex+1)
+                }
+            })
+            daan(timeindex);
+            function daan(cloindex){
+                setTimeout(function(){
+                    if(cloindex>=10){
+                        console.log('1')
+                        $('.dati').hide();
+                        $('.dati').eq(9).show();
+                        var right = arr.length;
+                        finish(right);
+                        $('.dt_jindu').text(10+'/'+10);
+                        clearTimeout(timer);
+                    }else{
+                        count = count+1;
+                        $('.dt_jindu').text(count+'/'+10)
+                        $('.dati').hide();
+                        $('.dati').eq(cloindex).show();
+                        clearTimeout(timer);
+                        wait=11;
+                        time();
+                    }
+                },1000)
+            }
+            //时间倒计时
+            time()
+           function time(){
+               if(wait<=0){
+                   var right_answers = $('.dati').eq(timeindex).find('.xuanziang').attr('data-answer');
+                   $('.dati').eq(timeindex).find('li').eq(right_answers).addClass('right');
+                   $('.dati').eq(timeindex).find('li').addClass('pointer_no');
+                   timeindex++;
+                   daan(timeindex);
+                   clearTimeout(timer);
+                   return;
+               }
+               wait--;
+               $('.djs').text(wait)
+               timer = setTimeout(function() {
+                   time()
+               },1000)
+           }
 </script>
 </html>
