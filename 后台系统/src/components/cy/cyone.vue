@@ -3,7 +3,7 @@
       <el-container>
         <el-aside width="200px">
             <ul class="slide_ul">
-              <li><router-link to="/">处理中心</router-link></li>
+              <li><router-link to="/index">处理中心</router-link></li>
               <li><router-link to="/cytwo">我的工作台</router-link></li>
               <li><router-link to="/datail">消息中心</router-link></li>
               <li><router-link to="/cyone">订单管理</router-link></li>
@@ -12,7 +12,7 @@
         <el-container>
           <el-header>
                 <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
-                 <el-menu-item index="1"><router-link to="/">处理中心</router-link></el-menu-item>
+                 <el-menu-item index="1"><router-link to="/index">处理中心</router-link></el-menu-item>
                  <el-menu-item index="2"><router-link to="/cytwo">我的工作台</router-link></el-menu-item>
                  <el-menu-item index="3"><router-link to="/datail">消息中心</router-link></el-menu-item>
                  <el-menu-item index="4"><router-link to="/cyone">订单管理</router-link></el-menu-item>

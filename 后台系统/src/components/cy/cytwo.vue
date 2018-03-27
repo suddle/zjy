@@ -3,7 +3,7 @@
       <el-container>
         <el-aside width="200px">
             <ul class="slide_ul">
-              <li><router-link to="/">处理中心</router-link></li>
+              <li><router-link to="/index">处理中心</router-link></li>
               <li><router-link to="/cytwo">我的工作台</router-link></li>
               <li><router-link to="/datail">消息中心</router-link></li>
               <li><router-link to="/cyone">订单管理</router-link></li>
@@ -12,7 +12,7 @@
         <el-container>
           <el-header>
                 <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
-                 <el-menu-item index="1"><router-link to="/">处理中心</router-link></el-menu-item>
+                 <el-menu-item index="1"><router-link to="/index">处理中心</router-link></el-menu-item>
                  <el-menu-item index="2"><router-link to="/cytwo">我的工作台</router-link></el-menu-item>
                  <el-menu-item index="3"><router-link to="/datail">消息中心</router-link></el-menu-item>
                  <el-menu-item index="4"><router-link to="/cyone">订单管理</router-link></el-menu-item>
@@ -64,6 +64,16 @@
                     <el-button>取消</el-button>
                   </el-form-item>
                 </el-form>
+                <el-upload
+                  action="https://jsonplaceholder.typicode.com/posts/"
+                  list-type="picture-card"
+                  :on-preview="handlePictureCardPreview"
+                  :on-remove="handleRemove">
+                  <i class="el-icon-plus"></i>
+                </el-upload>
+                <el-dialog :visible.sync="dialogVisible">
+                  <img width="100%" :src="dialogImageUrl" alt="">
+                </el-dialog>
             </div>
           </el-main>
           <el-footer>
@@ -86,6 +96,8 @@ export default {
         activeIndex2: '2',
         activeName: 'second',
         activeNames: ['1'],
+        dialogImageUrl: '',
+        dialogVisible: false,
         form: {
           name: '',
           region: '',
@@ -115,6 +127,13 @@ export default {
         this.activeIndex = key,
         this.activeIndex2 = key,
         console.log(key, keyPath);
+      },
+      handleRemove(file, fileList) {
+        console.log(file, fileList);
+      },
+      handlePictureCardPreview(file) {
+        this.dialogImageUrl = file.url;
+        this.dialogVisible = true;
       }
     }
   }
